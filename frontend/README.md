@@ -1,29 +1,65 @@
-# frontend
+# 🤖 RoboFleet Commander - Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+The Vue.js frontend for our robot fleet management dashboard. Watch robots move in real-time, track their paths, and control their missions!
 
-## Recommended IDE Setup
+## ✨ Features
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- 🗺️ Interactive map with OpenLayers
+- 📍 Real-time robot position tracking
+- 🛣️ Path visualization
+- 🎮 Robot control interface
 
-## Customize configuration
+## 🛠️ Tech Stack
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+- Vue 3
+- TypeScript
+- OpenLayers for mapping
+- Pinia for state management
+- Vite for development
 
-## Project Setup
+## 🚀 Getting Started
 
+### Setup
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
-
+### Development
 ```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
-
+### Production Build
 ```sh
 npm run build
 ```
+
+## 💻 Recommended IDE Setup
+
+- [VSCode](https://code.visualstudio.com/) 
+- [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur)
+
+## 📁 Project Structure
+
+```
+src/
+├── views/              # Main view components
+│   ├── DashboardView   # Main robot tracking interface
+│   ├── MissionsView    # Mission planning (coming soon)
+│   └── FleetView       # Fleet management
+├── stores/             # Pinia state management
+│   └── robotStore      # Robot state and actions
+├── components/         # Reusable components
+└── router/             # Vue router configuration
+```
+
+## 🎯 Current Status
+
+- ✅ Basic map interface
+- ✅ Robot movement simulation
+- ✅ Path tracking
+- 🚧 Mission planning
+- 🚧 Backend integration
+
+---
+*Part of the RoboFleet Commander project - Making robot fleet management fun!*
