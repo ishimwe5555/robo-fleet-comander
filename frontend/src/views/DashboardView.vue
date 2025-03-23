@@ -5,6 +5,7 @@
       <button @click="addTestRobot">Add Robot</button>
       <button @click="startMoving">Start Moving</button>
       <button @click="stopMoving">Stop</button>
+      <button @click="clearPaths">Clear Paths</button>
     </div>
     <div id="map" class="map-container"></div>
   </div>
@@ -18,6 +19,7 @@ import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import { Feature } from 'ol'
 import { Point } from 'ol/geom'
+import LineString from 'ol/geom/LineString'
 import { Style, Circle, Fill, Stroke } from 'ol/style'
 import OSM from 'ol/source/OSM'
 import { fromLonLat, toLonLat } from 'ol/proj'
@@ -25,7 +27,9 @@ import { useRobotStore } from '../stores/robotStore'
 
 const robotStore = useRobotStore()
 const robotLayer = ref<VectorLayer<VectorSource>>()
+const pathLayer = ref<VectorLayer<VectorSource>>()
 const robotFeatures = ref<Record<string, Feature<Point>>>({})
+const robotPaths = ref<Record<string, Feature<LineString>>>({})
 const animationFrameId = ref<number>()
 
 // Movement parameters
@@ -33,9 +37,22 @@ const SPEED = 0.0005 // degrees per frame
 const isMoving = ref(false)
 
 onMounted(() => {
-  const vectorSource = new VectorSource()
+  // Create path layer
+  const pathSource = new VectorSource()
+  pathLayer.value = new VectorLayer({
+    source: pathSource,
+    style: new Style({
+      stroke: new Stroke({
+        color: '#ff333380',
+        width: 2
+      })
+    })
+  })
+
+  // Create robot layer
+  const robotSource = new VectorSource()
   robotLayer.value = new VectorLayer({
-    source: vectorSource,
+    source: robotSource,
     style: new Style({
       image: new Circle({
         radius: 8,
@@ -51,6 +68,7 @@ onMounted(() => {
       new TileLayer({
         source: new OSM()
       }),
+      pathLayer.value,  // Add paths under robots
       robotLayer.value
     ],
     view: new View({
@@ -67,14 +85,23 @@ const addTestRobot = () => {
 
   const randomOffset = () => (Math.random() - 0.5) * 0.1
   const position = [4.35 + randomOffset(), 50.85 + randomOffset()]
+  const projectedPosition = fromLonLat(position)
   
   const robotId = `robot-${robotStore.robots.length + 1}`
+  
+  // Create robot marker
   const robotFeature = new Feature({
-    geometry: new Point(fromLonLat(position))
+    geometry: new Point(projectedPosition)
   })
-
   source.addFeature(robotFeature)
   robotFeatures.value[robotId] = robotFeature
+
+  // Create path feature
+  const pathFeature = new Feature({
+    geometry: new LineString([projectedPosition])
+  })
+  pathLayer.value?.getSource()?.addFeature(pathFeature)
+  robotPaths.value[robotId] = pathFeature
 
   robotStore.robots.push({
     id: robotId,
@@ -100,6 +127,15 @@ const moveRobots = () => {
     const newPosition = fromLonLat([lon + dx, lat + dy])
     geometry.setCoordinates(newPosition)
     
+    // Update path
+    const pathFeature = robotPaths.value[robotId]
+    if (pathFeature) {
+      const path = pathFeature.getGeometry() as LineString
+      const coordinates = path.getCoordinates()
+      coordinates.push(newPosition)
+      path.setCoordinates(coordinates)
+    }
+    
     const robot = robotStore.robots.find(r => r.id === robotId)
     if (robot) {
       robot.position = [lon + dx, lat + dy]
@@ -122,6 +158,15 @@ const stopMoving = () => {
   if (animationFrameId.value) {
     cancelAnimationFrame(animationFrameId.value)
   }
+}
+
+const clearPaths = () => {
+  Object.values(robotPaths.value).forEach(pathFeature => {
+    const geometry = pathFeature.getGeometry() as LineString
+    // Reset path to current robot position
+    const robotPosition = geometry.getCoordinates().slice(-1)
+    geometry.setCoordinates(robotPosition)
+  })
 }
 
 // Cleanup
