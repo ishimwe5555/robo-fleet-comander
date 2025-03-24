@@ -1,8 +1,3 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
   <nav>
     <RouterLink to="/">Dashboard</RouterLink>
@@ -41,3 +36,16 @@ header {
   }
 }
 </style>
+
+<script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+import { wsService } from './services/websocket'
+
+onMounted(() => {
+  wsService.connect()
+})
+
+onUnmounted(() => {
+  wsService.disconnect()
+})
+</script>

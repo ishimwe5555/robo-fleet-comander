@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from .routes import robots
 from .models.robot import Base
 from .database import engine
+from .websocket.connection import manager
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -37,4 +38,15 @@ async def get_robots():
                 "position": [4.35, 50.85]  # Brussels coordinates
             }
         ]
-    } 
+    }
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Echo back for now
+            await manager.broadcast(f"Message text was: {data}")
+    except:
+        manager.disconnect(websocket) 

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.robot import Robot
+from ..websocket.connection import manager
 
 router = APIRouter()
 
@@ -22,4 +23,27 @@ async def create_robot(name: str, db: Session = Depends(get_db)):
     db.add(robot)
     db.commit()
     db.refresh(robot)
-    return robot 
+    return robot
+
+@router.put("/robots/{robot_id}/position")
+async def update_robot_position(
+    robot_id: str, 
+    latitude: float, 
+    longitude: float,
+    db: Session = Depends(get_db)
+):
+    robot = db.query(Robot).filter(Robot.id == robot_id).first()
+    if not robot:
+        raise HTTPException(status_code=404, detail="Robot not found")
+    
+    robot.latitude = latitude
+    robot.longitude = longitude
+    db.commit()
+
+    # Broadcast position update
+    await manager.broadcast_robot_position(
+        robot_id, 
+        {"latitude": latitude, "longitude": longitude}
+    )
+    
+    return {"status": "success"} 
