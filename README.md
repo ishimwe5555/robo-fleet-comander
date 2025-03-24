@@ -1,65 +1,90 @@
-# 🤖 RoboFleet Commander - Frontend
+# 🤖 RoboFleet Commander
 
-The Vue.js frontend for our robot fleet management dashboard. Watch robots move in real-time, track their paths, and control their missions!
+A real-time robot fleet management system with interactive mapping and WebSocket communication.
 
 ## ✨ Features
 
-- 🗺️ Interactive map with OpenLayers
-- 📍 Real-time robot position tracking
-- 🛣️ Path visualization
-- 🎮 Robot control interface
+### Current Features
+- 🗺️ Interactive OpenLayers map interface
+- 🤖 Real-time robot position tracking
+- 🔄 WebSocket-based live updates
+- 🎮 Robot controls:
+  - Activate/Deactivate robots
+  - Move robots by clicking on map
+  - Stop robot movement
+- 📍 Status monitoring panel
+
+### Planned Features
+- 🛣️ Path visualization and trails
+- 📝 Mission planning and waypoints
+- 🔋 Robot status simulation (battery, speed, etc.)
+- 🎯 Zone mapping and boundaries
 
 ## 🛠️ Tech Stack
 
-- Vue 3
-- TypeScript
-- OpenLayers for mapping
+### Frontend
+- Vue 3 with TypeScript
 - Pinia for state management
-- Vite for development
+- OpenLayers for mapping
+- WebSocket for real-time updates
+
+### Backend
+- FastAPI
+- SQLAlchemy
+- SQLite database
+- WebSocket for real-time communication
 
 ## 🚀 Getting Started
 
-### Setup
-```sh
+### Prerequisites
+- Python 3.8+
+- Node.js 16+
+- npm or yarn
+
+### Backend Setup
+bash
+cd backend
+python -m venv venv
+source venv/bin/activate # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+### Frontend Setup
+bash
+cd frontend
 npm install
-```
-
-### Development
-```sh
 npm run dev
-```
 
-### Production Build
-```sh
-npm run build
-```
-
-## 💻 Recommended IDE Setup
-
-- [VSCode](https://code.visualstudio.com/) 
-- [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur)
+### Default Ports
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8000
+- API Docs: http://localhost:8000/docs
 
 ## 📁 Project Structure
 
-```
-src/
-├── views/              # Main view components
-│   ├── DashboardView   # Main robot tracking interface
-│   ├── MissionsView    # Mission planning (coming soon)
-│   └── FleetView       # Fleet management
-├── stores/             # Pinia state management
-│   └── robotStore      # Robot state and actions
-├── components/         # Reusable components
-└── router/             # Vue router configuration
-```
+## 🎮 Usage
 
-## 🎯 Current Status
+1. Start both backend and frontend servers
+2. Open http://localhost:5173 in your browser
+3. Create robots using the API:
+   ```bash
+   curl -X POST "http://localhost:8000/api/robots?name=TestBot"
+   ```
+4. Activate robots using the dashboard controls
+5. Click on the map to move active robots
+6. Monitor real-time updates in the status panel
 
-- ✅ Basic map interface
-- ✅ Robot movement simulation
-- ✅ Path tracking
-- 🚧 Mission planning
-- 🚧 Backend integration
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
-*Part of the RoboFleet Commander project - Making robot fleet management fun!*
+Built with ❤️ for robot fleet management enthusiasts
