@@ -19,6 +19,8 @@ export class WebSocketService {
           data.position.longitude,
           data.position.latitude
         ])
+      } else if (data.type === 'status_update') {
+        robotStore.updateRobotStatus(data.robot_id, data.status)
       }
     }
 

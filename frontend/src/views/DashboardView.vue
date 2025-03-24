@@ -3,7 +3,16 @@
     <div class="status-panel">
       <h2>Robot Status</h2>
       <div v-for="robot in robotStore.robots" :key="robot.id" class="robot-status">
-        {{ robot.name }} - {{ robot.status }}
+        <div class="robot-header">
+          {{ robot.name }} - {{ robot.status }}
+        </div>
+        <div class="robot-controls">
+          <button @click="activateRobot(robot.id)">Activate</button>
+          <button @click="deactivateRobot(robot.id)">Deactivate</button>
+          <div class="position">
+            [{{ robot.position[0].toFixed(2) }}, {{ robot.position[1].toFixed(2) }}]
+          </div>
+        </div>
       </div>
       <WebSocketTester />
     </div>
@@ -70,6 +79,35 @@ onMounted(async () => {
   })
 })
 
+const activateRobot = async (robotId: string) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/robots/${robotId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'active' })
+    })
+    if (response.ok) {
+      robotStore.updateRobotStatus(robotId, 'active')
+    }
+  } catch (error) {
+    console.error('Error activating robot:', error)
+  }
+}
+
+const deactivateRobot = async (robotId: string) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/robots/${robotId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'inactive' })
+    })
+    if (response.ok) {
+      robotStore.updateRobotStatus(robotId, 'inactive')
+    }
+  } catch (error) {
+    console.error('Error deactivating robot:', error)
+  }
+}
 </script>
 
 <style scoped>
@@ -90,10 +128,41 @@ onMounted(async () => {
 }
 
 .robot-status {
-  padding: 8px;
-  margin: 4px 0;
+  padding: 12px;
+  margin: 8px 0;
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.robot-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.robot-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.robot-controls button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #4CAF50;
+  color: white;
+}
+
+.robot-controls button:hover {
+  background: #45a049;
+}
+
+.position {
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 4px;
+  width: 100%;
 }
 </style>

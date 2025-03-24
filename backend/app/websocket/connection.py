@@ -1,5 +1,5 @@
 from fastapi import WebSocket
-from typing import Dict, Set
+from typing import Dict, Set, Any
 import json
 
 class ConnectionManager:
@@ -14,17 +14,17 @@ class ConnectionManager:
         self.active_connections.remove(websocket)
 
     async def broadcast_robot_position(self, robot_id: str, position: Dict):
-        message = {
+        await self.broadcast({
             "type": "position_update",
             "robot_id": robot_id,
             "position": position
-        }
-        await self.broadcast(json.dumps(message))
+        })
 
-    async def broadcast(self, message: str):
+    async def broadcast(self, message: Any):
+        message_str = json.dumps(message)
         for connection in self.active_connections:
             try:
-                await connection.send_text(message)
+                await connection.send_text(message_str)
             except:
                 # Connection might be closed
                 self.active_connections.remove(connection)
