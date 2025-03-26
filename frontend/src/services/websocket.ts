@@ -12,7 +12,12 @@ export class WebSocketService {
     this.ws = new WebSocket(this.url)
     const robotStore = useRobotStore()
 
+    this.ws.onopen = () => {
+      console.log('WebSocket connected')  // Debug log
+    }
+
     this.ws.onmessage = (event) => {
+      console.log('WebSocket message:', event.data)  // Debug log
       const data = JSON.parse(event.data)
       if (data.type === 'position_update') {
         robotStore.updateRobotPosition(data.robot_id, [

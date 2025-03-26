@@ -27,16 +27,19 @@ import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import { Feature } from 'ol'
-import { Point } from 'ol/geom'
+import { Point, LineString } from 'ol/geom'
 import { Style, Circle, Fill, Stroke } from 'ol/style'
 import OSM from 'ol/source/OSM'
 import { fromLonLat } from 'ol/proj'
 import { useRobotStore } from '../stores/robotStore'
 import WebSocketTester from '../components/WebSocketTester.vue'
+import { transform } from 'ol/proj'
 
 const robotStore = useRobotStore()
 const robotLayer = ref<VectorLayer<VectorSource>>()
 const robotFeatures = ref<Record<string, Feature<Point>>>({})
+const trailLayers = ref<Record<string, VectorLayer<VectorSource>>>({})
+const map = ref<Map>()
 
 onMounted(async () => {
   const vectorSource = new VectorSource()
@@ -44,14 +47,14 @@ onMounted(async () => {
     source: vectorSource,
     style: new Style({
       image: new Circle({
-        radius: 12,  // Bigger radius
+        radius: 8,
         fill: new Fill({ color: '#ff3333' }),
-        stroke: new Stroke({ color: '#ffffff', width: 3 })
+        stroke: new Stroke({ color: '#ffffff', width: 2 })
       })
     })
   })
 
-  const map = new Map({
+  map.value = new Map({
     target: 'map',
     layers: [
       new TileLayer({
@@ -60,14 +63,27 @@ onMounted(async () => {
       robotLayer.value
     ],
     view: new View({
-      center: fromLonLat([4.35, 50.85]), // Brussels center
-      zoom: 11  // Zoom out a bit to see all robots
+      center: fromLonLat([4.35, 50.85]), // Brussels
+      zoom: 12
     })
   })
 
-  // Fetch and add robots
+  // Fetch robots and add them to the map
   await robotStore.fetchRobots()
-  console.log('Loaded robots:', robotStore.robots)
+
+  // Add click handler
+  map.value.on('click', (event) => {
+    const coords = transform(event.coordinate, 'EPSG:3857', 'EPSG:4326')
+    console.log('Map clicked at:', coords)  // Debug log
+    
+    const activeRobots = robotStore.robots.filter(r => r.status === 'active')
+    console.log('Active robots:', activeRobots)  // Debug log
+    
+    activeRobots.forEach(robot => {
+      console.log(`Moving robot ${robot.id} to ${coords[0]}, ${coords[1]}`)  // Debug log
+      moveRobot(robot.id, coords[0], coords[1])
+    })
+  })
 
   robotStore.robots.forEach(robot => {
     console.log(`Adding robot ${robot.id} at position:`, robot.position)
@@ -77,6 +93,15 @@ onMounted(async () => {
     robotFeatures.value[robot.id] = feature
     robotLayer.value?.getSource()?.addFeature(feature)
   })
+
+  // Update trails every 2 seconds
+  setInterval(() => {
+    robotStore.robots.forEach(robot => {
+      if (robot.status === 'active') {
+        updateRobotTrail(robot.id)
+      }
+    })
+  }, 2000)
 })
 
 const activateRobot = async (robotId: string) => {
@@ -106,6 +131,61 @@ const deactivateRobot = async (robotId: string) => {
     }
   } catch (error) {
     console.error('Error deactivating robot:', error)
+  }
+}
+
+const createTrailLayer = (robotId: string) => {
+  const source = new VectorSource()
+  const layer = new VectorLayer({
+    source,
+    style: new Style({
+      stroke: new Stroke({
+        color: '#ff3333',
+        width: 2,
+        lineDash: [5, 5],
+      })
+    })
+  })
+  trailLayers.value[robotId] = layer
+  map.value?.addLayer(layer)
+}
+
+const updateRobotTrail = async (robotId: string) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/robots/${robotId}/trail`)
+    const data = await response.json()
+    
+    if (!trailLayers.value[robotId]) {
+      createTrailLayer(robotId)
+    }
+
+    const coordinates = data.trail.map((point: any) => 
+      fromLonLat([point.longitude, point.latitude])
+    )
+
+    const lineString = new LineString(coordinates)
+    const feature = new Feature(lineString)
+    
+    const source = trailLayers.value[robotId].getSource()
+    source?.clear()
+    source?.addFeature(feature)
+  } catch (error) {
+    console.error('Error updating trail:', error)
+  }
+}
+
+const moveRobot = async (robotId: string, longitude: number, latitude: number) => {
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/robots/${robotId}/move?target_longitude=${longitude}&target_latitude=${latitude}`,
+      {
+        method: 'POST'
+      }
+    )
+    const data = await response.json()
+    console.log('Move response:', data)  // Debug log
+  } catch (error) {
+    console.error('Error moving robot:', error)
   }
 }
 </script>
